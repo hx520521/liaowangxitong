@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据仓库 - 智能瞭望数据分析处理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: #333;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+        }
+        
+        .header .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header .user-info span {
+            margin-right: 20px;
+        }
+        
+        .header .user-info a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .header .user-info a:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        
+        .search-info {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+        }
+        
+        .search-info h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .search-form {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: 500;
+        }
+        
+        .form-group input[type="text"],
+        .form-group input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .form-group input[type="text"]:focus,
+        .form-group input[type="date"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+        
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+            margin-left: 10px;
+        }
+        
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+        
+        .results-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .result-item {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .result-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        .result-item .content {
+            flex: 1;
+        }
+        
+        .result-item h3 {
+            margin-bottom: 10px;
+        }
+        
+        .result-item h3 a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 18px;
+        }
+        
+        .result-item h3 a:hover {
+            text-decoration: underline;
+        }
+        
+        .result-item .summary {
+            color: #666;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+        
+        .result-item .meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .result-item .url {
+            color: #006621;
+        }
+        
+        .result-item .date {
+            margin-left: 20px;
+        }
+        
+        .result-item .cover-image {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        
+        .no-results {
+            background: white;
+            padding: 50px;
+            border-radius: 10px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .search-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .form-group {
+                margin-bottom: 10px;
+            }
+            
+            .result-item {
+                flex-direction: column;
+            }
+            
+            .result-item .cover-image {
+                width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>智能瞭望数据分析处理系统</h1>
+        <div class="user-info">
+            <span>欢迎, {{ session['username'] }}</span>
+            <a href="/logout">登出</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="search-info">
+            <h2>数据仓库</h2>
+            <form class="search-form" method="GET">
+                <div class="form-group">
+                    <label for="keyword">关键词搜索</label>
+                    <input type="text" id="keyword" name="keyword" value="{{ keyword }}" placeholder="搜索标题、摘要或关键词">
+                </div>
+                <div class="form-group">
+                    <label for="date">按日期筛选</label>
+                    <input type="date" id="date" name="date" value="{{ date }}">
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn">搜索</button>
+                    <a href="/data_warehouse" class="btn btn-secondary">清除筛选</a>
+                    <a href="/dashboard" class="btn btn-secondary">返回搜索</a>
+                </div>
+            </form>
+        </div>
+        
+        <div class="batch-actions">
+            <form method="POST" action="/delete_results">
+                <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" id="select_all" style="transform: scale(1.2);">
+                    <label for="select_all">全选</label>
+                    <button type="submit" class="btn" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); margin-left: 20px;">批量删除</button>
+                    <button type="button" class="btn" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); margin-left: 10px;">AI分析</button>
+                </div>
+                
+                <div class="results-list">
+                    {% if results %}
+                        {% for result in results %}
+                            <div class="result-item">
+                                <div style="margin-right: 15px; display: flex; align-items: flex-start; margin-top: 5px;">
+                                    <input type="checkbox" name="result_ids[]" value="{{ result.id }}" class="result-checkbox" style="transform: scale(1.2);">
+                                </div>
+                                <div class="content">
+                                    <h3><a href="{{ result.url }}" target="_blank">{{ result.title }}</a></h3>
+                                    <div class="summary">{{ result.summary }}</div>
+                                    <div class="meta">
+                                        <div class="url">{{ result.url }}</div>
+                                        <div class="date">{{ result.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                    </div>
+                                </div>
+                                {% if result.cover_url %}
+                                    <img src="{{ result.cover_url }}" alt="封面" class="cover-image">
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-results">
+                            <h3>没有找到相关数据</h3>
+                            <p>请尝试调整搜索条件或先进行搜索</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- AI分析区域 -->
+    <div class="analysis-section" style="margin-bottom: 30px; padding: 20px; background: white; border-radius: 10px; box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);">
+        <h3 style="margin-bottom: 15px; color: #333;">AI分析</h3>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+            <div style="flex: 1; min-width: 250px;">
+                <label for="analysis_prompt" style="display: block; margin-bottom: 5px; color: #666; font-weight: 500;">分析提示</label>
+                <textarea id="analysis_prompt" rows="3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; resize: vertical;" placeholder="请输入您的分析需求..."></textarea>
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button id="start_analysis" class="btn" style="padding: 10px 25px;">开始分析</button>
+                <button id="stop_analysis" class="btn btn-secondary" style="margin-left: 10px; padding: 10px 25px; display: none;">停止分析</button>
+            </div>
+        
+        <!-- 分析结果区域 -->
+        <div id="analysis_result" style="display: none; border: 1px solid #ddd; border-radius: 5px; padding: 15px; background: #f9f9f9;">
+            <h4 style="margin-bottom: 10px; color: #333;">分析结果</h4>
+            <div id="analysis_content" style="white-space: pre-wrap; line-height: 1.6; color: #555;"></div>
+            <div id="analysis_status" style="margin-top: 15px; font-size: 14px; color: #999;"></div>
+        </div>
+    </div>
+        </div>
+        
+        <script>
+            // 全选/取消全选功能
+            document.getElementById('select_all').addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.result-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = this.checked;
+                });
+            });
+            
+            // 单个复选框变化时，检查全选状态
+            document.querySelectorAll('.result-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const allCheckboxes = document.querySelectorAll('.result-checkbox');
+                    const selectAllCheckbox = document.getElementById('select_all');
+                    selectAllCheckbox.checked = Array.from(allCheckboxes).every(cb => cb.checked);
+                });
+            });
+        </script>
+    </div>
+    <!-- AI分析功能JavaScript -->
+    <script>
+        // 分析功能相关变量
+        let eventSource = null;
+        let isAnalyzing = false;
+        
+        // 开始分析按钮点击事件
+        document.getElementById('start_analysis').addEventListener('click', function() {
+            const prompt = document.getElementById('analysis_prompt').value.trim();
+            if (!prompt) {
+                alert('请输入分析提示');
+                return;
+            }
+            
+            // 获取选中的搜索结果ID
+            const selectedResults = document.querySelectorAll('input[name="result_ids[]"]:checked');
+            const resultIds = Array.from(selectedResults).map(input => input.value);
+            
+            // 显示结果区域
+            document.getElementById('analysis_result').style.display = 'block';
+            document.getElementById('analysis_content').textContent = '';
+            document.getElementById('analysis_status').textContent = '分析中...';
+            
+            // 更新按钮状态
+            document.getElementById('start_analysis').style.display = 'none';
+            document.getElementById('stop_analysis').style.display = 'inline-block';
+            
+            isAnalyzing = true;
+            
+            // 构建表单数据
+            const formData = new FormData();
+            formData.append('analysis_text', prompt);
+            resultIds.forEach(id => formData.append('result_ids[]', id));
+            
+            // 创建SSE连接
+            eventSource = new EventSource(`/analyze_data?prompt=${encodeURIComponent(prompt)}&result_ids=${resultIds.join(',')}`);
+            
+            // 处理SSE事件
+            eventSource.onmessage = function(event) {
+                if (event.data === '[DONE]') {
+                    // 分析完成
+                    document.getElementById('analysis_status').textContent = '分析完成';
+                    cleanupAnalysis();
+                    return;
+                }
+                
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.error) {
+                        document.getElementById('analysis_content').textContent += `错误: ${data.error}\n`;
+                        document.getElementById('analysis_status').textContent = '分析失败';
+                        cleanupAnalysis();
+                    } else if (data.content) {
+                        document.getElementById('analysis_content').textContent += data.content;
+                    }
+                } catch (e) {
+                    console.error('解析SSE数据失败:', e);
+                    document.getElementById('analysis_content').textContent += `\n[数据解析错误]\n`;
+                }
+            };
+            
+            eventSource.onerror = function() {
+                console.error('SSE连接错误');
+                document.getElementById('analysis_status').textContent = '连接错误';
+                cleanupAnalysis();
+            };
+        });
+        
+        // 停止分析按钮点击事件
+        document.getElementById('stop_analysis').addEventListener('click', function() {
+            cleanupAnalysis();
+        });
+        
+        // 清理分析资源
+        function cleanupAnalysis() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+            
+            isAnalyzing = false;
+            
+            // 恢复按钮状态
+            document.getElementById('start_analysis').style.display = 'inline-block';
+            document.getElementById('stop_analysis').style.display = 'none';
+        }
+        
+        // 页面关闭前清理SSE连接
+        window.addEventListener('beforeunload', function() {
+            if (eventSource) {
+                eventSource.close();
+            }
+        });
+    </script>
+</body>
+</html>
