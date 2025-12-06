@@ -13,10 +13,41 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a237e;
+            background-color: #0a0e27;
             color: #333;
-            background-image: linear-gradient(135deg, #1a237e 0%, #283593 50%, #303f9f 100%);
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(30, 60, 114, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(21, 101, 192, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0e27 0%, #1a1f3a 25%, #2a3153 50%, #1a1f3a 75%, #0a0e27 100%);
+            background-size: 100% 100%, 100% 100%, 4px 4px;
             min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(255, 255, 255, 0.02),
+                rgba(255, 255, 255, 0.02) 1px,
+                transparent 1px,
+                transparent 20px
+            ),
+            repeating-linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.02),
+                rgba(255, 255, 255, 0.02) 1px,
+                transparent 1px,
+                transparent 20px
+            );
+            pointer-events: none;
+            z-index: 0;
         }
         
         .header {
@@ -79,6 +110,8 @@
             max-width: 1000px;
             margin: 30px auto;
             padding: 0 20px;
+            position: relative;
+            z-index: 1;
         }
         
         .search-info {
