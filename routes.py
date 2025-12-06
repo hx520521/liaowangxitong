@@ -74,7 +74,8 @@ def save_results():
                     summary=summary,
                     url=url,
                     cover_url=cover_url,
-                    search_keyword=keyword
+                    search_keyword=keyword,
+                    source='百度搜索'
                 )
                 db.session.add(result)
     

@@ -343,9 +343,10 @@
                                     <h3><a href="{{ result.url }}" target="_blank">{{ result.title }}</a></h3>
                                     <div class="summary">{{ result.summary }}</div>
                                     <div class="meta">
-                                        <div class="url">{{ result.url }}</div>
-                                        <div class="date">{{ result.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
-                                    </div>
+                                    <div class="source" style="color: #009688;">来源: {{ result.source }}</div>
+                                    <div class="url">{{ result.url }}</div>
+                                    <div class="date">{{ result.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                </div>
                                 </div>
                                 {% if result.cover_url %}
                                     <img src="{{ result.cover_url }}" alt="封面" class="cover-image">
