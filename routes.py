@@ -99,7 +99,9 @@ def data_warehouse():
     
     if date:
         # 筛选指定日期的数据
-        query = query.filter(SearchResult.created_at.like(f'{date}%'))
+        # 使用DATE()函数提取日期部分进行比较，确保格式匹配
+        from sqlalchemy import func
+        query = query.filter(func.date(SearchResult.created_at) == date)
     
     # 按创建时间倒序排序
     results = query.order_by(SearchResult.created_at.desc()).all()
