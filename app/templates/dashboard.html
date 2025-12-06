@@ -13,17 +13,20 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fa;
+            background-color: #1a237e;
             color: #333;
+            background-image: linear-gradient(135deg, #1a237e 0%, #283593 50%, #303f9f 100%);
+            min-height: 100vh;
         }
         
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
             color: white;
             padding: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
         }
         
         .header h1 {
@@ -80,15 +83,19 @@
         
         .search-box {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 60px 40px;
             text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .search-box h2 {
             margin-bottom: 30px;
-            color: #333;
+            color: #0d47a1;
+            font-size: 28px;
+            font-weight: 600;
         }
         
         .search-form {
@@ -113,17 +120,20 @@
         
         .search-form button {
             padding: 12px 24px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
             color: white;
             border: none;
             border-radius: 5px;
             font-size: 16px;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(13, 71, 161, 0.3);
         }
         
         .search-form button:hover {
-            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13, 71, 161, 0.4);
         }
         
         .quick-links {
@@ -137,17 +147,20 @@
             display: inline-block;
             padding: 12px 24px;
             background: white;
-            color: #667eea;
+            color: #0d47a1;
             text-decoration: none;
-            border: 2px solid #667eea;
+            border: 2px solid #0d47a1;
             border-radius: 5px;
             font-weight: 500;
             transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(13, 71, 161, 0.1);
         }
         
         .quick-links a:hover {
-            background: #667eea;
+            background: #0d47a1;
             color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(13, 71, 161, 0.2);
         }
         
         @media (max-width: 768px) {
@@ -176,10 +189,10 @@
     
     <div class="container">
         <div class="search-box">
-            <h2>百度搜索</h2>
+            <h2>数据采集控制台</h2>
             <form class="search-form" action="/search" method="POST">
                 <input type="text" name="keyword" placeholder="请输入搜索关键词" required>
-                <button type="submit">搜索</button>
+                <button type="submit">开始采集</button>
             </form>
             <div class="quick-links">
                 <a href="/data_warehouse">数据仓库</a>
