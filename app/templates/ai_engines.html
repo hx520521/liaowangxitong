@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI模型引擎管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0a0e27;
+            color: #333;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(30, 60, 114, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(21, 101, 192, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0e27 0%, #1a1f3a 25%, #2a3153 50%, #1a1f3a 75%, #0a0e27 100%);
+            background-size: 100% 100%, 100% 100%, 4px 4px;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(255, 255, 255, 0.02),
+                rgba(255, 255, 255, 0.02) 1px,
+                transparent 1px,
+                transparent 20px
+            ),
+            repeating-linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.02),
+                rgba(255, 255, 255, 0.02) 1px,
+                transparent 1px,
+                transparent 20px
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* 布局样式 */
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            margin-top: 80px;
+        }
+        
+        /* 左侧菜单样式 */
+        .sidebar {
+            width: 280px;
+            background-color: rgba(15, 23, 42, 0.95);
+            padding: 20px;
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            top: 80px;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .sidebar h3 {
+            color: #4299e1;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-bottom: 2px solid rgba(66, 153, 225, 0.2);
+            padding-bottom: 10px;
+        }
+        
+        .menu-list {
+            list-style: none;
+        }
+        
+        .menu-item {
+            margin-bottom: 5px;
+        }
+        
+        .menu-item a {
+            display: block;
+            padding: 12px 15px;
+            color: #cbd5e0;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background-color: rgba(26, 32, 44, 0.5);
+            font-weight: 500;
+        }
+        
+        .menu-item a:hover {
+            background-color: rgba(66, 153, 225, 0.2);
+            color: #63b3ed;
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.15);
+        }
+        
+        .submenu {
+            list-style: none;
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+        
+        .submenu .menu-item {
+            margin-bottom: 3px;
+        }
+        
+        .submenu .menu-item a {
+            padding: 10px 15px;
+            font-size: 14px;
+            background-color: rgba(45, 55, 72, 0.5);
+        }
+        
+        .submenu .menu-item a:hover {
+            background-color: rgba(66, 153, 225, 0.15);
+            color: #90cdf4;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+        }
+        
+        .header .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header .quick-methods {
+            display: flex;
+            gap: 10px;
+            margin-right: 30px;
+        }
+        
+        .header .quick-methods a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            transition: background 0.3s;
+            font-weight: 500;
+        }
+        
+        .header .quick-methods a:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .header .user-info span {
+            margin-right: 20px;
+        }
+        
+        .header .user-info a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .header .user-info a:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto 0 320px;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .page-title {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 32px;
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .add-btn {
+            background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.3);
+        }
+        
+        .add-btn:hover {
+            background: linear-gradient(135deg, #388e3c 0%, #43a047 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(46, 125, 50, 0.4);
+        }
+        
+        .engines-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .engine-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 25px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .engine-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #0d47a1 0%, #1565c0 100%);
+        }
+        
+        .engine-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+        
+        .engine-card.active::before {
+            background: linear-gradient(90deg, #2e7d32 0%, #388e3c 100%);
+        }
+        
+        .engine-card.inactive::before {
+            background: linear-gradient(90deg, #d32f2f 0%, #e53935 100%);
+        }
+        
+        .engine-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .engine-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #0d47a1;
+            margin-bottom: 5px;
+        }
+        
+        .engine-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .engine-status.active {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .engine-status.inactive {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        
+        .engine-info {
+            margin-bottom: 15px;
+        }
+        
+        .engine-info-item {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .engine-info-label {
+            font-weight: 600;
+            color: #666;
+            width: 100px;
+        }
+        
+        .engine-info-value {
+            color: #333;
+            word-break: break-word;
+        }
+        
+        .engine-description {
+            background: #f5f5f5;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #555;
+            line-height: 1.5;
+            min-height: 60px;
+        }
+        
+        .engine-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: space-between;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .btn-edit {
+            background: linear-gradient(135deg, #f57c00 0%, #ff9800 100%);
+            color: white;
+        }
+        
+        .btn-edit:hover {
+            background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%);
+            transform: translateY(-2px);
+        }
+        
+        .btn-delete {
+            background: linear-gradient(135deg, #d32f2f 0%, #e53935 100%);
+            color: white;
+        }
+        
+        .btn-delete:hover {
+            background: linear-gradient(135deg, #e53935 0%, #ef5350 100%);
+            transform: translateY(-2px);
+        }
+        
+        .btn-test {
+            background: linear-gradient(135deg, #7b1fa2 0%, #9c27b0 100%);
+            color: white;
+        }
+        
+        .btn-test:hover {
+            background: linear-gradient(135deg, #9c27b0 0%, #ab47bc 100%);
+            transform: translateY(-2px);
+        }
+        
+        .btn-chat {
+            background: linear-gradient(135deg, #1976d2 0%, #2196f3 100%);
+            color: white;
+        }
+        
+        .btn-chat:hover {
+            background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
+            transform: translateY(-2px);
+        }
+        
+        .test-response {
+            background: #f0f8ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 14px;
+            color: #0d47a1;
+            border-left: 4px solid #1565c0;
+            min-height: 50px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        .message {
+            background: #e8f5e9;
+            color: #388e3c;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #d32f2f;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        @media (max-width: 768px) {
+            .engines-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .engine-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>智能瞭望数据分析处理系统</h1>
+        <div class="user-info">
+            <span>欢迎, {{ session['username'] }}</span>
+            <a href="/logout">登出</a>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <!-- 左侧菜单 -->
+        <div class="sidebar">
+            <h3>功能菜单</h3>
+            <ul class="menu-list">
+                {% for menu in left_menus %}
+                    {% if menu.is_active %}
+                        <li class="menu-item">
+                            <a href="{{ menu.url if menu.url else '#' }}">{{ menu.name }}</a>
+                            {% if menu.children %}
+                                <ul class="submenu-list">
+                                    {% for submenu in menu.children %}
+                                        {% if submenu.is_active %}
+                                            <li class="submenu-item">
+                                                <a href="{{ submenu.url if submenu.url else '#' }}">{{ submenu.name }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <!-- 主内容区域 -->
+        <div class="container">
+        <h2 class="page-title">AI模型引擎管理</h2>
+        
+        {% if message %}
+        <div class="message">{{ message }}</div>
+        {% endif %}
+        
+        <a href="/add_ai_engine" class="add-btn">添加新引擎</a>
+        
+        <div class="engines-grid">
+            {% for engine in engines %}
+            <div class="engine-card {% if engine.is_active %}active{% else %}inactive{% endif %}">
+                <div class="engine-header">
+                    <div>
+                        <h3 class="engine-title">{{ engine.name }}</h3>
+                        <div class="engine-status {% if engine.is_active %}active{% else %}inactive{% endif %}">
+                            {{ '已激活' if engine.is_active else '未激活' }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="engine-info">
+                    <div class="engine-info-item">
+                        <span class="engine-info-label">提供商:</span>
+                        <span class="engine-info-value">{{ engine.provider }}</span>
+                    </div>
+                    <div class="engine-info-item">
+                        <span class="engine-info-label">模型名称:</span>
+                        <span class="engine-info-value">{{ engine.model_name }}</span>
+                    </div>
+                    <div class="engine-info-item">
+                        <span class="engine-info-label">API地址:</span>
+                        <span class="engine-info-value">{{ engine.api_base }}</span>
+                    </div>
+                    <div class="engine-info-item">
+                        <span class="engine-info-label">M Tokens:</span>
+                        <span class="engine-info-value">{{ "%.4f" % (token_dict.get(engine.id, 0) / 1000000) }}</span>
+                    </div>
+                </div>
+                
+                <div class="engine-description">
+                    {{ engine.description or '暂无描述' }}
+                </div>
+                
+                <div class="engine-actions">
+                    <a href="/edit_ai_engine/{{ engine.id }}" class="btn btn-edit">编辑</a>
+                    <button onclick="deleteEngine({{ engine.id }})" class="btn btn-delete">删除</button>
+                    <button onclick="testEngine({{ engine.id }}, this)" class="btn btn-test">测试</button>
+                    <a href="/chat_with_engine/{{ engine.id }}" class="btn btn-chat">对话</a>
+                </div>
+                
+                <div id="test-response-{{ engine.id }}" class="test-response" style="display: none;"></div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if not engines %}
+        <div class="message">暂无AI模型引擎，请先添加</div>
+        {% endif %}
+    </div>
+    
+    <script>
+        // 删除引擎
+        function deleteEngine(engineId) {
+            if (confirm('确定要删除这个AI模型引擎吗？')) {
+                fetch(`/delete_ai_engine/${engineId}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        window.location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    alert('删除失败: ' + error.message);
+                });
+            }
+        }
+        
+        // 测试引擎
+        function testEngine(engineId, button) {
+            const responseDiv = document.getElementById(`test-response-${engineId}`);
+            responseDiv.style.display = 'block';
+            responseDiv.innerHTML = '测试中...';
+            button.disabled = true;
+            button.innerHTML = '测试中';
+            
+            // 创建EventSource连接
+            const eventSource = new EventSource(`/test_ai_engine/${engineId}`);
+            
+            eventSource.onmessage = function(event) {
+                responseDiv.innerHTML += event.data;
+            };
+            
+            eventSource.onerror = function() {
+                eventSource.close();
+                button.disabled = false;
+                button.innerHTML = '测试';
+            };
+            
+            // 连接关闭时
+            eventSource.onopen = function() {
+                // 重置响应
+                responseDiv.innerHTML = '';
+            };
+        }
+    </script>
+</body>
+</html>

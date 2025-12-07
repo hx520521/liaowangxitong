@@ -262,6 +262,10 @@
             <div class="quick-methods">
                 <a href="/dashboard">搜索采集</a>
                 <a href="/data_warehouse">数据仓库</a>
+                <a href="/rule_library">规则库管理</a>
+                <a href="/content_details">深度内容管理</a>
+                <a href="/ai_engines">AI模型引擎</a>
+                <a href="/spiders">爬虫管理</a>
             </div>
             <span>欢迎, {{ session['username'] }}</span>
             <a href="/logout">登出</a>
@@ -276,6 +280,7 @@
                 <button id="select-all" class="btn btn-secondary">全选</button>
                 <button id="deselect-all" class="btn btn-secondary">取消全选</button>
                 <button type="submit" form="save-form" class="btn btn-primary">保存选中结果</button>
+                <button id="crawl-selected" class="btn btn-primary">采集选中内容</button>
             </div>
         </div>
         
@@ -285,15 +290,18 @@
                 {% if results %}
                     {% for result in results %}
                         <div class="result-item">
-                            <div class="checkbox">
-                                <input type="checkbox" name="results[]" value="{{ result.title }}|{{ result.summary }}|{{ result.url }}|{{ result.cover_url }}">
-                            </div>
-                            <div class="content">
-                                <h3><a href="{{ result.url }}" target="_blank">{{ result.title }}</a></h3>
-                                <div class="summary">{{ result.summary }}</div>
-                                <div class="url">{{ result.url }}</div>
-                                <div class="source" style="margin-top: 8px; color: #999; font-size: 14px;">来源: 百度搜索</div>
-                            </div>
+                                <div class="checkbox">
+                                    <input type="checkbox" name="results[]" value="{{ result.title }}|{{ result.summary }}|{{ result.url }}|{{ result.cover_url }}|{{ result.source }}">
+                                </div>
+                                <div class="content">
+                                    <h3><a href="{{ result.url }}" target="_blank">{{ result.title }}</a></h3>
+                                    <div class="summary">{{ result.summary }}</div>
+                                    <div class="url">{{ result.url }}</div>
+                                    <div class="meta-info" style="margin-top: 8px; color: #999; font-size: 14px; display: flex; flex-wrap: wrap; gap: 10px;">
+                                        <span>搜索词: {{ keyword }}</span>
+                                        <span>来源: {{ '百度搜索' if result.source == 'baidu' else 'Bing搜索' }}</span>
+                                    </div>
+                                </div>
                             {% if result.cover_url %}
                                 <img src="{{ result.cover_url }}" alt="封面" class="cover-image">
                             {% endif %}
@@ -307,6 +315,19 @@
                 {% endif %}
             </div>
         </form>
+    </div>
+    
+    <!-- 采集进度弹窗 -->
+    <div id="crawl-modal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgb(0,0,0); background-color: rgba(0,0,0,0.4);">
+        <div class="modal-content" style="background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 50%; max-width: 600px; border-radius: 10px;">
+            <span class="close" style="color: #aaa; float: right; font-size: 28px; font-weight: bold;">&times;</span>
+            <h3>数据采集进度</h3>
+            <div id="crawl-progress" style="margin: 20px 0;">
+                <div id="progress-bar" style="width: 0%; height: 30px; background-color: #0d47a1; text-align: center; line-height: 30px; color: white; border-radius: 5px; transition: width 0.3s;"></div>
+            </div>
+            <div id="crawl-status" style="margin: 20px 0; padding: 10px; background-color: #f5f5f5; border-radius: 5px; min-height: 100px; overflow-y: auto;"></div>
+            <button id="close-modal" class="btn btn-secondary" style="margin-top: 20px;">关闭</button>
+        </div>
     </div>
     
     <script>
@@ -324,6 +345,105 @@
                 checkbox.checked = false;
             });
         });
+        
+        // 采集功能
+        document.getElementById('crawl-selected').addEventListener('click', async function() {
+            const selectedCheckboxes = document.querySelectorAll('input[name="results[]"]:checked');
+            if (selectedCheckboxes.length === 0) {
+                alert('请先选择要采集的结果');
+                return;
+            }
+            
+            // 显示采集进度弹窗
+            const modal = document.getElementById('crawl-modal');
+            const progressBar = document.getElementById('progress-bar');
+            const statusDiv = document.getElementById('crawl-status');
+            
+            modal.style.display = 'block';
+            progressBar.style.width = '0%';
+            statusDiv.innerHTML = '';
+            
+            // 获取关键词
+            const keyword = document.querySelector('input[name="keyword"]').value;
+            
+            // 初始化进度
+            let processed = 0;
+            const total = selectedCheckboxes.length;
+            
+            // 循环处理每个选中的结果
+            for (let i = 0; i < selectedCheckboxes.length; i++) {
+                const checkbox = selectedCheckboxes[i];
+                const resultData = checkbox.value;
+                
+                try {
+                    // 创建表单数据并保存当前结果
+                    const formData = new FormData();
+                    formData.append('keyword', keyword);
+                    formData.append('results[]', resultData);
+                    
+                    const saveResponse = await fetch('/save_results', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const saveData = await saveResponse.json();
+                    if (saveData.success && saveData.result_ids && saveData.result_ids.length > 0) {
+                        const savedResultId = saveData.result_ids[0];
+                        
+                        // 使用保存后的结果ID调用采集接口
+                        const crawlResponse = await fetch('/crawl_single_result', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            },
+                            body: `result_id=${savedResultId}`
+                        });
+                        
+                        const crawlData = await crawlResponse.json();
+                        if (crawlData.success) {
+                            statusDiv.innerHTML += `<p>采集成功: ${crawlData.result.title || '未知'}</p>`;
+                        } else {
+                            statusDiv.innerHTML += `<p style="color: red;">采集失败: ${crawlData.message}</p>`;
+                        }
+                    } else {
+                        statusDiv.innerHTML += `<p style="color: red;">保存结果失败: ${saveData.message}</p>`;
+                    }
+                } catch (error) {
+                    statusDiv.innerHTML += `<p style="color: red;">处理出错: ${error.message}</p>`;
+                } finally {
+                    processed++;
+                    const progress = Math.round((processed / total) * 100);
+                    progressBar.style.width = progress + '%';
+                    
+                    // 滚动到底部
+                    statusDiv.scrollTop = statusDiv.scrollHeight;
+                    
+                    // 避免请求过于频繁
+                    if (i < selectedCheckboxes.length - 1) {
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+                }
+            }
+            
+            statusDiv.innerHTML += '<p style="color: green; font-weight: bold;">所有采集任务已完成！</p>';
+        });
+        
+        // 关闭弹窗
+        document.querySelector('.close').addEventListener('click', function() {
+            document.getElementById('crawl-modal').style.display = 'none';
+        });
+        
+        document.getElementById('close-modal').addEventListener('click', function() {
+            document.getElementById('crawl-modal').style.display = 'none';
+        });
+        
+        // 点击弹窗外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('crawl-modal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>

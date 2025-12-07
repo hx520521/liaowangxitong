@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>与AI模型对话</title>
+    <style>
+        /* 全局样式 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        
+        /* 头部样式 */
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .quick-methods {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .quick-methods a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .quick-methods a:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* 容器样式 */
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+        
+        .page-title {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        /* 对话容器样式 */
+        .chat-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        /* 对话头部 */
+        .chat-header {
+            padding: 20px;
+            background-color: #f0f0f0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .engine-info {
+            margin-bottom: 15px;
+        }
+        
+        .engine-name {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .engine-provider {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .back-link {
+            display: inline-block;
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        
+        .back-link:hover {
+            background-color: #45a049;
+        }
+        
+        /* 对话历史 */
+        .chat-history {
+            height: 500px;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        /* 消息样式 */
+        .message {
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .assistant-message {
+            align-self: flex-start;
+            background-color: #f1f1f1;
+            color: #333;
+        }
+        
+        .message-role {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        /* 输入区域 */
+        .chat-input-area {
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+            background-color: #f9f9f9;
+        }
+        
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+        
+        #chat-input {
+            flex: 1;
+            min-height: 80px;
+            max-height: 200px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            font-size: 14px;
+            font-family: Arial, sans-serif;
+        }
+        
+        .chat-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #45a049;
+        }
+        
+        .btn-primary:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e0e0e0;
+        }
+        
+        /* 加载指示器 */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #4CAF50;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .message {
+                max-width: 85%;
+            }
+            
+            .input-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .chat-controls {
+                flex-direction: row;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">数据采集与分析系统</div>
+        <div class="quick-methods">
+            <a href="/dashboard">搜索采集</a>
+            <a href="/data_warehouse">数据仓库</a>
+            <a href="/rule_library">规则库管理</a>
+            <a href="/content_details">深度内容管理</a>
+            <a href="/ai_engines">AI模型引擎</a>
+            <a href="/spiders">爬虫管理</a>
+        </div>
+        <div>
+            <span>欢迎, {{ session['username'] }}</span>
+            <a href="/logout" style="color: white; text-decoration: none; margin-left: 20px;">登出</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="engine-info">
+                    <div class="engine-name">{{ engine.name }}</div>
+                    <div class="engine-provider">提供商: {{ engine.provider }}</div>
+                </div>
+                <a href="/ai_engines" class="back-link">返回引擎列表</a>
+            </div>
+            
+            <div class="chat-history" id="chat-history">
+                <!-- 对话历史将在这里动态生成 -->
+            </div>
+            
+            <div class="chat-input-area">
+                <div class="input-container">
+                    <textarea id="chat-input" placeholder="请输入您的问题..." rows="3"></textarea>
+                    <div class="chat-controls">
+                        <button id="send-btn" class="btn btn-primary" onclick="sendMessage()">发送</button>
+                        <button id="clear-btn" class="btn btn-secondary" onclick="clearChat()">清除历史</button>
+                    </div>
+                </div>
+                <div id="loading-indicator" style="display: none; margin-top: 10px;">
+                    <span class="loading"></span> AI正在思考...
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // 存储对话历史
+        let chatHistory = [];
+        let eventSource = null;
+        const engineId = {{ engine.id }};
+        
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 绑定回车键发送消息
+            document.getElementById('chat-input').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+        
+        // 发送消息
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // 添加用户消息到历史
+            addMessage('user', message);
+            
+            // 清空输入框
+            input.value = '';
+            
+            // 显示加载指示器
+            document.getElementById('loading-indicator').style.display = 'block';
+            
+            // 添加系统提示（仅当是第一次消息时）
+            if (chatHistory.length === 0) {
+                chatHistory.push({ role: 'system', content: '你是一个有用的AI助手，请用中文回答用户的问题。' });
+            }
+            
+            // 添加用户消息到历史
+            chatHistory.push({ role: 'user', content: message });
+            
+            // 创建AI消息占位符
+            const aiMessageDiv = document.createElement('div');
+            aiMessageDiv.className = 'message assistant-message';
+            aiMessageDiv.innerHTML = '<div class="message-role">AI:</div><div class="message-content"></div>';
+            document.getElementById('chat-history').appendChild(aiMessageDiv);
+            
+            // 滚动到底部
+            scrollToBottom();
+            
+            // 创建SSE连接
+            const chatHistoryParam = encodeURIComponent(JSON.stringify(chatHistory));
+            eventSource = new EventSource(`/chat_with_engine/${engineId}/stream?chat_history=${chatHistoryParam}`);
+            
+            // 处理消息事件
+            eventSource.onmessage = function(event) {
+                const content = event.data;
+                if (content === '[DONE]') {
+                    // 完成响应
+                    eventSource.close();
+                    document.getElementById('loading-indicator').style.display = 'none';
+                    
+                    // 保存完整的AI消息到历史
+                    const aiMessageContent = aiMessageDiv.querySelector('.message-content').textContent;
+                    chatHistory.push({ role: 'assistant', content: aiMessageContent });
+                } else {
+                    // 实时添加响应内容
+                    aiMessageDiv.querySelector('.message-content').textContent += content;
+                    scrollToBottom();
+                }
+            };
+            
+            // 处理错误
+            eventSource.onerror = function() {
+                eventSource.close();
+                document.getElementById('loading-indicator').style.display = 'none';
+                
+                // 添加错误消息
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message assistant-message';
+                errorDiv.innerHTML = '<div class="message-role">AI:</div><div class="message-content">抱歉，发生了错误，请稍后重试。</div>';
+                document.getElementById('chat-history').appendChild(errorDiv);
+                scrollToBottom();
+            };
+        }
+        
+        // 添加消息到历史
+        function addMessage(role, content) {
+            const historyDiv = document.getElementById('chat-history');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role === 'user' ? 'user-message' : 'assistant-message'}`;
+            
+            const roleText = role === 'user' ? '您' : 'AI';
+            messageDiv.innerHTML = `<div class="message-role">${roleText}:</div><div class="message-content">${content}</div>`;
+            
+            historyDiv.appendChild(messageDiv);
+            scrollToBottom();
+        }
+        
+        // 滚动到底部
+        function scrollToBottom() {
+            const historyDiv = document.getElementById('chat-history');
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+        }
+        
+        // 清除对话历史
+        function clearChat() {
+            if (confirm('确定要清除对话历史吗？')) {
+                chatHistory = [];
+                document.getElementById('chat-history').innerHTML = '';
+            }
+        }
+        
+        // 页面离开时关闭SSE连接
+        window.addEventListener('beforeunload', function() {
+            if (eventSource) {
+                eventSource.close();
+            }
+        });
+    </script>
+</body>
+</html>

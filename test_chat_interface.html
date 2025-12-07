@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聊天室测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .chat-container {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            height: 400px;
+            overflow-y: scroll;
+            margin-bottom: 10px;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        .message .meta {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .message .content {
+            background-color: #f0f0f0;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+        input[type="text"] {
+            width: 70%;
+            padding: 8px;
+            margin-right: 5px;
+        }
+        button {
+            padding: 8px 15px;
+        }
+    </style>
+</head>
+<body>
+    <h1>聊天室消息发送测试</h1>
+    
+    <div id="login-section">
+        <h2>登录</h2>
+        <input type="text" id="username" placeholder="用户名">
+        <input type="password" id="password" placeholder="密码">
+        <button id="login-btn">登录</button>
+    </div>
+    
+    <div id="chat-section" style="display: none;">
+        <h2>聊天室</h2>
+        <div id="chat-container" class="chat-container"></div>
+        <input type="text" id="message-input" placeholder="输入消息">
+        <button id="send-btn">发送</button>
+    </div>
+    
+    <script>
+        // 全局变量
+        let token = '';
+        const roomId = 5; // 使用测试的聊天室ID
+        
+        // 登录功能
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            fetch('http://127.0.0.1:5000/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    'username': username,
+                    'password': password
+                }),
+                credentials: 'include' // 包含cookie
+            })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('login-section').style.display = 'none';
+                    document.getElementById('chat-section').style.display = 'block';
+                    alert('登录成功');
+                    loadMessages(); // 加载历史消息
+                } else {
+                    alert('登录失败');
+                }
+            })
+            .catch(error => {
+                console.error('登录失败:', error);
+                alert('登录失败，请检查网络连接');
+            });
+        });
+        
+        // 加载消息
+        function loadMessages() {
+            fetch(`http://127.0.0.1:5000/chatroom/${roomId}`)
+            .then(response => response.text())
+            .then(html => {
+                // 从HTML中提取消息
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const messages = doc.querySelectorAll('.message');
+                
+                const chatContainer = document.getElementById('chat-container');
+                chatContainer.innerHTML = '';
+                
+                messages.forEach(msg => {
+                    chatContainer.appendChild(msg.cloneNode(true));
+                });
+            })
+            .catch(error => {
+                console.error('加载消息失败:', error);
+            });
+        }
+        
+        // 发送消息
+        document.getElementById('send-btn').addEventListener('click', () => {
+            const content = document.getElementById('message-input').value;
+            if (!content) return;
+            
+            fetch(`http://127.0.0.1:5000/send_message/${roomId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({
+                    'content': content
+                }),
+                credentials: 'include' // 包含cookie
+            })
+            .then(response => {
+                console.log('响应状态:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('响应数据:', data);
+                if (data.success) {
+                    // 清空输入框
+                    document.getElementById('message-input').value = '';
+                    
+                    // 添加新消息
+                    const chatContainer = document.getElementById('chat-container');
+                    const newMessage = document.createElement('div');
+                    newMessage.className = 'message';
+                    newMessage.innerHTML = `
+                        <div class="meta">
+                            <span class="username">${data.message.username}</span>
+                            <span class="time">${data.message.created_at}</span>
+                        </div>
+                        <div class="content">${data.message.content}</div>
+                    `;
+                    chatContainer.appendChild(newMessage);
+                    
+                    // 滚动到底部
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                } else {
+                    alert('发送失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('发送失败:', error);
+                alert('发送失败，请检查网络连接');
+            });
+        });
+        
+        // 回车键发送消息
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('send-btn').click();
+            }
+        });
+    </script>
+</body>
+</html>

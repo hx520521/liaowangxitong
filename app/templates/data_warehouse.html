@@ -50,6 +50,74 @@
             z-index: 0;
         }
         
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+        }
+        
+        /* 左侧菜单样式 */
+        .sidebar {
+            width: 250px;
+            background: rgba(13, 71, 161, 0.9);
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .sidebar h3 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .menu-list {
+            list-style: none;
+        }
+        
+        .menu-item {
+            margin-bottom: 5px;
+        }
+        
+        .menu-item a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            display: block;
+            border-radius: 5px;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px;
+        }
+        
+        .menu-item a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .submenu-list {
+            list-style: none;
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+        
+        .submenu-item {
+            margin-bottom: 3px;
+        }
+        
+        .submenu-item a {
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 14px;
+            padding: 8px 15px;
+        }
+        
         .header {
             background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
             color: white;
@@ -126,6 +194,25 @@
             color: #333;
             font-size: 20px;
             margin-bottom: 20px;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid transparent;
+            border-radius: 4px;
+        }
+        
+        .alert-success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+        
+        .alert-danger {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
         }
         
         .search-form {
@@ -294,18 +381,46 @@
     <div class="header">
         <h1>智能瞭望数据分析处理系统</h1>
         <div class="user-info">
-            <div class="quick-methods">
-                <a href="/dashboard">搜索采集</a>
-                <a href="/data_warehouse">数据仓库</a>
-            </div>
             <span>欢迎, {{ session['username'] }}</span>
             <a href="/logout">登出</a>
         </div>
     </div>
     
-    <div class="container">
+    <div class="main-content">
+        <!-- 左侧菜单 -->
+        <div class="sidebar">
+            <h3>功能菜单</h3>
+            <ul class="menu-list">
+                {% for menu in left_menus %}
+                    {% if menu.is_active %}
+                        <li class="menu-item">
+                            <a href="{{ menu.url if menu.url else '#' }}">{{ menu.name }}</a>
+                            {% if menu.children %}
+                                <ul class="submenu-list">
+                                    {% for submenu in menu.children %}
+                                        {% if submenu.is_active %}
+                                            <li class="submenu-item">
+                                                <a href="{{ submenu.url if submenu.url else '#' }}">{{ submenu.name }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <!-- 主内容区域 -->
+        <div class="container">
         <div class="search-info">
             <h2>数据仓库</h2>
+            {% if message %}
+                <div class="alert alert-{{ 'success' if success == 'true' else 'danger' }}">
+                    {{ message }}
+                </div>
+            {% endif %}
             <form class="search-form" method="GET">
                 <div class="form-group">
                     <label for="keyword">关键词搜索</label>
@@ -319,6 +434,7 @@
                     <button type="submit" class="btn">搜索</button>
                     <a href="/data_warehouse" class="btn btn-secondary">清除筛选</a>
                     <a href="/dashboard" class="btn btn-secondary">返回数据采集控制台</a>
+                    <a href="/rule_library" class="btn btn-primary">规则管理</a>
                 </div>
             </form>
         </div>
@@ -329,23 +445,39 @@
                     <input type="checkbox" id="select_all" style="transform: scale(1.2);">
                     <label for="select_all">全选</label>
                     <button type="submit" class="btn" style="background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); margin-left: 20px;">批量删除</button>
-                    <button type="button" class="btn" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); margin-left: 10px;">AI分析</button>
+                    <button type="button" id="batch_crawl" class="btn" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); margin-left: 10px;">批量采集</button>
+                    <button type="button" id="start_analysis" class="btn" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); margin-left: 10px;">AI分析</button>
+                    <button type="button" id="stop_analysis" class="btn" style="background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%); margin-left: 10px; display: none;">停止分析</button>
                 </div>
                 
                 <div class="results-list">
                     {% if results %}
                         {% for result in results %}
                             <div class="result-item">
-                                <div style="margin-right: 15px; display: flex; align-items: flex-start; margin-top: 5px;">
+                                <div style="margin-right: 15px; display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 5px;">
                                     <input type="checkbox" name="result_ids[]" value="{{ result.id }}" class="result-checkbox" style="transform: scale(1.2);">
+                                    <button type="button" class="btn crawl-btn" data-result-id="{{ result.id }}" data-url="{{ result.url }}" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);" title="采集">
+                        <i class="fa fa-download" style="font-size: 16px;"></i>
+                    </button>
+                                    <button type="button" class="btn sniff-btn" style="width: 36px; height: 36px; padding: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);" title="嗅探" data-url="{{ result.url }}">
+                                        <i class="fa fa-search" style="font-size: 16px;"></i>
+                                    </button>
                                 </div>
                                 <div class="content">
                                     <h3><a href="{{ result.url }}" target="_blank">{{ result.title }}</a></h3>
+                                    <div class="domain" style="color: #666; font-size: 12px; margin: 5px 0;">域名: {{ result.domain }}</div>
                                     <div class="summary">{{ result.summary }}</div>
                                     <div class="meta">
-                                    <div class="source" style="color: #009688;">来源: {{ result.source }}</div>
-                                    <div class="url">{{ result.url }}</div>
-                                    <div class="date">{{ result.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+                                        <div class="source" style="color: #009688;">来源: {{ result.source }}</div>
+                                        <div style="color: #999;">ID: {{ result.id }}</div>
+                                        <div style="color: #999;">搜索词: {{ result.search_keyword }}</div>
+                                        {% if result.default_crawl_rule %}
+                                        <div style="color: #27ae60;">采集规则: {{ result.default_crawl_rule.rule_name }}</div>
+                                        {% endif %}
+                                        <div class="url">{{ result.url }}</div>
+                                        <div class="date">{{ result.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                    </div>
                                 </div>
                                 </div>
                                 {% if result.cover_url %}
@@ -404,8 +536,244 @@
                 });
             });
         </script>
-    </div>
-    <!-- AI分析功能JavaScript -->
+    <!-- 采集进度和结果简报 -->
+        <div id="crawl-progress" style="display: none; margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f8f9fa;">
+            <h3 style="margin-top: 0; color: #333;">采集进度</h3>
+            <div id="progress-bar" style="width: 100%; background-color: #e9ecef; border-radius: 4px; margin: 10px 0;">
+                <div id="progress-fill" style="width: 0%; height: 20px; background-color: #17a2b8; border-radius: 4px; text-align: center; color: white; line-height: 20px;"></div>
+            </div>
+            <div id="progress-info"></div>
+        </div>
+        <div id="crawl-results" style="display: none; margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f8f9fa;">
+            <h3 style="margin-top: 0; color: #333;">采集结果简报</h3>
+            <div id="results-summary"></div>
+        </div>
+        </div>
+        <!-- 采集功能JavaScript -->
+        <script>
+            // 采集进度和状态
+            let crawlProgress = {
+                total: 0,
+                completed: 0,
+                success: 0,
+                failed: 0,
+                status: 'idle',
+                details: []
+            };
+            
+            // 单条采集按钮点击事件
+            document.querySelectorAll('.crawl-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const resultId = this.getAttribute('data-result-id');
+                    const url = this.getAttribute('data-url');
+                    const originalHTML = this.innerHTML;
+                    
+                    // 显示加载状态
+                    this.innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size: 14px;"></i>';
+                    this.disabled = true;
+                    
+                    // 开始采集
+                    fetch('/crawl_single_result', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
+                            'result_id': resultId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 恢复按钮状态
+                        this.innerHTML = originalHTML;
+                        this.disabled = false;
+                        
+                        if (data.success) {
+                            alert('采集成功！');
+                            // 更新状态显示 - 添加错误处理，避免DOM操作失败影响结果
+                            try {
+                                const resultItem = this.closest('.result-item');
+                                if (resultItem) {
+                                    const title = resultItem.querySelector('h3');
+                                    if (title) {
+                                        title.innerHTML += '<span class="crawl-status success" style="margin-left: 10px; padding: 2px 8px; background-color: #28a745; color: white; border-radius: 10px; font-size: 12px;">已采集</span>';
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('更新状态显示失败:', e);
+                            }
+                        } else {
+                            alert('采集失败：' + data.message);
+                            // 更新状态显示 - 添加错误处理，避免DOM操作失败影响结果
+                            try {
+                                const resultItem = this.closest('.result-item');
+                                if (resultItem) {
+                                    const title = resultItem.querySelector('h3');
+                                    if (title) {
+                                        title.innerHTML += '<span class="crawl-status failed" style="margin-left: 10px; padding: 2px 8px; background-color: #dc3545; color: white; border-radius: 10px; font-size: 12px;">采集失败</span>';
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('更新状态显示失败:', e);
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        // 恢复按钮状态
+                        this.innerHTML = originalHTML;
+                        this.disabled = false;
+                        console.error('采集请求错误:', error);
+                        alert('采集请求失败，请检查网络连接后重试。');
+                    });
+                });
+            });
+            
+            // 批量采集按钮点击事件
+            document.getElementById('batch_crawl').addEventListener('click', function() {
+                // 获取选中的搜索结果ID
+                const selectedResults = document.querySelectorAll('input[name="result_ids[]"]:checked');
+                const resultIds = Array.from(selectedResults).map(input => input.value);
+                
+                if (resultIds.length === 0) {
+                    alert('请至少选择一个搜索结果进行采集');
+                    return;
+                }
+                
+                // 初始化采集进度
+                crawlProgress = {
+                    total: resultIds.length,
+                    completed: 0,
+                    success: 0,
+                    failed: 0,
+                    status: 'running',
+                    details: []
+                };
+                
+                // 显示采集进度
+                document.getElementById('crawl-progress').style.display = 'block';
+                document.getElementById('progress-fill').style.width = '0%';
+                document.getElementById('progress-info').innerHTML = '准备开始采集...';
+                
+                // 隐藏结果简报
+                document.getElementById('crawl-results').style.display = 'none';
+                
+                // 发送批量采集请求
+                fetch('/crawl_batch_results', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'result_ids': resultIds.join(',')
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 开始轮询采集进度
+                        checkCrawlProgress();
+                    } else {
+                        alert('批量采集请求失败：' + data.message);
+                        document.getElementById('crawl-progress').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('批量采集请求错误:', error);
+                    alert('批量采集请求失败，请检查网络连接后重试。');
+                    document.getElementById('crawl-progress').style.display = 'none';
+                });
+            });
+            
+            // 轮询采集进度
+            function checkCrawlProgress() {
+                if (crawlProgress.status !== 'running') {
+                    return;
+                }
+                
+                fetch('/get_crawl_progress')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        crawlProgress = data.data;
+                        
+                        // 更新进度条
+                        const progress = Math.round((crawlProgress.completed / crawlProgress.total) * 100);
+                        document.getElementById('progress-fill').style.width = progress + '%';
+                        document.getElementById('progress-fill').textContent = progress + '%';
+                        
+                        // 更新进度信息
+                        document.getElementById('progress-info').innerHTML = 
+                            `已完成 ${crawlProgress.completed}/${crawlProgress.total} 个采集任务<br>
+                            成功: ${crawlProgress.success} | 失败: ${crawlProgress.failed}`;
+                        
+                        if (crawlProgress.completed < crawlProgress.total) {
+                            // 继续轮询
+                            setTimeout(checkCrawlProgress, 1000);
+                        } else {
+                            // 采集完成，显示结果简报
+                            showCrawlResults();
+                        }
+                    } else {
+                        console.error('获取采集进度失败:', data.message);
+                        setTimeout(checkCrawlProgress, 1000);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取采集进度请求错误:', error);
+                    setTimeout(checkCrawlProgress, 1000);
+                });
+            }
+            
+            // 显示采集结果简报
+            function showCrawlResults() {
+                // 获取详细采集结果
+                fetch('/get_crawl_results')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const results = data.data;
+                        
+                        // 构建结果简报
+                        let summaryHTML = `
+                            <p>总任务数: ${results.length}</p>
+                            <p>成功: ${results.filter(r => r.status === 'success').length}</p>
+                            <p>失败: ${results.filter(r => r.status === 'failed').length}</p>
+                            <h4>详细结果:</h4>
+                            <ul style="max-height: 300px; overflow-y: auto;">
+                        `;
+                        
+                        results.forEach(result => {
+                            const statusClass = result.status === 'success' ? 'success' : 'failed';
+                            const statusText = result.status === 'success' ? '成功' : '失败';
+                            summaryHTML += `
+                                <li class="${statusClass}" style="margin: 5px 0; padding: 5px; border-radius: 4px; background-color: ${result.status === 'success' ? '#d4edda' : '#f8d7da'};">
+                                    <strong>${result.title}</strong><br>
+                                    ${result.status === 'failed' ? '错误信息: ' + result.error_message : '已成功采集'}
+                                </li>
+                            `;
+                        });
+                        
+                        summaryHTML += '</ul>';
+                        
+                        // 更新结果简报 - 添加错误处理
+                        try {
+                            const resultsSummary = document.getElementById('results-summary');
+                            const crawlResults = document.getElementById('crawl-results');
+                            if (resultsSummary && crawlResults) {
+                                resultsSummary.innerHTML = summaryHTML;
+                                crawlResults.style.display = 'block';
+                            }
+                        } catch (e) {
+                            console.error('更新采集结果显示失败:', e);
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('获取采集结果失败:', error);
+                });
+            }
+        </script>
+        <!-- AI分析功能JavaScript -->
     <script>
         // 分析功能相关变量
         let eventSource = null;
@@ -498,6 +866,202 @@
                 eventSource.close();
             }
         });
+        
+        // 嗅探功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取弹窗元素
+            const sniffModal = document.getElementById('sniff-modal');
+            const closeBtn = document.querySelector('.close');
+            const cancelBtn = document.getElementById('cancel-btn');
+            const saveBtn = document.getElementById('save-btn');
+            const sniffLoading = document.getElementById('sniff-loading');
+            const ruleEditor = document.getElementById('sniff-rule-editor');
+            
+            // 关闭弹窗的函数
+            function closeModal() {
+                sniffModal.style.display = 'none';
+            }
+            
+            // 关闭按钮点击事件
+            closeBtn.onclick = closeModal;
+            cancelBtn.onclick = closeModal;
+            
+            // 点击弹窗外部区域关闭弹窗
+            window.onclick = function(event) {
+                if (event.target === sniffModal) {
+                    closeModal();
+                }
+            }
+            
+            // 为所有嗅探按钮添加点击事件
+            document.querySelectorAll('.sniff-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    const originalHTML = this.innerHTML;
+                    
+                    // 显示加载状态
+                    this.innerHTML = '<i class="fa fa-spinner fa-spin" style="font-size: 16px;"></i>';
+                    this.disabled = true;
+                    
+                    // 显示嗅探弹窗和加载状态
+                    sniffModal.style.display = 'block';
+                    sniffLoading.style.display = 'block';
+                    ruleEditor.style.display = 'none';
+                    
+                    // 发送嗅探请求
+                    fetch('/sniff_url', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
+                            'url': url
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 恢复按钮状态
+                        this.innerHTML = originalHTML;
+                        this.disabled = false;
+                        
+                        if (data.success) {
+                            // 隐藏加载状态，显示规则编辑器
+                            sniffLoading.style.display = 'none';
+                            ruleEditor.style.display = 'block';
+                            
+                            // 填充规则数据到表单
+                            document.getElementById('rule-name').value = data.data.rule_name;
+                            document.getElementById('domain').value = data.data.domain;
+                            document.getElementById('title-xpath').value = data.data.title_xpath;
+                            document.getElementById('content-xpath').value = data.data.content_xpath;
+                            document.getElementById('headers').value = JSON.stringify(data.data.headers, null, 2);
+                        } else {
+                            // 关闭弹窗并显示错误提示
+                            closeModal();
+                            alert('嗅探失败：' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        // 恢复按钮状态
+                        this.innerHTML = originalHTML;
+                        this.disabled = false;
+                        
+                        // 关闭弹窗并显示错误提示
+                        closeModal();
+                        console.error('嗅探请求错误:', error);
+                        alert('嗅探请求失败，请检查网络连接后重试。');
+                    });
+                });
+            });
+            
+            // 保存规则按钮点击事件
+            saveBtn.addEventListener('click', function() {
+                // 获取表单数据
+                const ruleName = document.getElementById('rule-name').value;
+                const domain = document.getElementById('domain').value;
+                const titleXpath = document.getElementById('title-xpath').value;
+                const contentXpath = document.getElementById('content-xpath').value;
+                const headersText = document.getElementById('headers').value;
+                
+                // 验证必填字段
+                if (!ruleName || !domain) {
+                    alert('规则名称和域名不能为空！');
+                    return;
+                }
+                
+                // 解析headers为JSON
+                let headers = {};
+                try {
+                    headers = JSON.parse(headersText);
+                } catch (error) {
+                    alert('请求头格式错误，请输入有效的JSON格式！');
+                    return;
+                }
+                
+                // 保存规则
+                fetch('/save_crawl_rule', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        'rule_name': ruleName,
+                        'domain': domain,
+                        'title_xpath': titleXpath,
+                        'content_xpath': contentXpath,
+                        'headers': JSON.stringify(headers)
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 关闭弹窗并显示成功提示
+                        closeModal();
+                        alert('规则保存成功！');
+                        // 刷新页面或更新规则列表
+                        window.location.reload();
+                    } else {
+                        alert('规则保存失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('保存规则请求错误:', error);
+                    alert('保存规则请求失败，请检查网络连接后重试。');
+                });
+            });
+        });
     </script>
+    <!-- 嗅探任务弹窗 -->
+    <div id="sniff-modal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5);">
+        <div class="modal-content" style="background-color: #fefefe; margin: 5% auto; padding: 20px; border: 1px solid #888; width: 60%; max-width: 800px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+            <!-- 弹窗头部 -->
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #ddd;">
+                <h2 id="sniff-modal-title" style="margin: 0; color: #333;">嗅探任务</h2>
+                <span class="close" style="color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+            </div>
+            
+            <!-- 嗅探加载状态 -->
+            <div id="sniff-loading" style="display: none; text-align: center; padding: 50px 0;">
+                <i class="fa fa-spinner fa-spin" style="font-size: 48px; color: #007bff;"></i>
+                <p style="margin-top: 20px; font-size: 18px; color: #666;">正在嗅探网页...请稍候</p>
+            </div>
+            
+            <!-- 规则编辑界面 -->
+            <div id="sniff-rule-editor" style="display: none; padding: 20px 0;">
+                <form id="rule-form">
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="rule-name" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">规则名称:</label>
+                        <input type="text" id="rule-name" name="rule_name" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="domain" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">域名:</label>
+                        <input type="text" id="domain" name="domain" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="title-xpath" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">标题XPath:</label>
+                        <input type="text" id="title-xpath" name="title_xpath" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="content-xpath" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">内容XPath:</label>
+                        <input type="text" id="content-xpath" name="content_xpath" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="headers" style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">请求头 (JSON):</label>
+                        <textarea id="headers" name="headers" style="width: 100%; height: 150px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; font-family: monospace; resize: vertical;"></textarea>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- 弹窗底部按钮 -->
+            <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 10px; padding-top: 20px; border-top: 1px solid #ddd;">
+                <button id="cancel-btn" style="padding: 8px 16px; border: 1px solid #ddd; background-color: #f8f9fa; color: #333; border-radius: 4px; cursor: pointer; font-size: 14px;">取消</button>
+                <button id="save-btn" style="padding: 8px 16px; border: none; background-color: #007bff; color: white; border-radius: 4px; cursor: pointer; font-size: 14px;">保存规则</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据源管理 - 智能瞭望数据分析处理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0a0e27;
+            color: #333;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(30, 60, 114, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(21, 101, 192, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0e27 0%, #1a1f3a 25%, #2a3153 50%, #1a1f3a 75%, #0a0e27 100%);
+            background-size: 100% 100%, 100% 100%, 4px 4px;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(255, 255, 255, 0.02),
+                rgba(255, 255, 255, 0.02) 1px,
+                transparent 1px,
+                transparent 20px
+            ),
+            repeating-linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.02),
+                rgba(255, 255, 255, 0.02) 1px,
+                transparent 1px,
+                transparent 20px
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        /* 布局样式 */
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            margin-top: 80px;
+        }
+        
+        /* 左侧菜单样式 */
+        .sidebar {
+            width: 280px;
+            background-color: rgba(15, 23, 42, 0.95);
+            padding: 20px;
+            box-shadow: 2px 0 15px rgba(0, 0, 0, 0.3);
+            position: fixed;
+            top: 80px;
+            left: 0;
+            bottom: 0;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+        
+        .sidebar h3 {
+            color: #4299e1;
+            margin-bottom: 20px;
+            font-size: 18px;
+            border-bottom: 2px solid rgba(66, 153, 225, 0.2);
+            padding-bottom: 10px;
+        }
+        
+        .menu-list {
+            list-style: none;
+        }
+        
+        .menu-item {
+            margin-bottom: 5px;
+        }
+        
+        .menu-item a {
+            display: block;
+            padding: 12px 15px;
+            color: #cbd5e0;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background-color: rgba(26, 32, 44, 0.5);
+            font-weight: 500;
+        }
+        
+        .menu-item a:hover {
+            background-color: rgba(66, 153, 225, 0.2);
+            color: #63b3ed;
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.15);
+        }
+        
+        .submenu {
+            list-style: none;
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+        
+        .submenu .menu-item {
+            margin-bottom: 3px;
+        }
+        
+        .submenu .menu-item a {
+            padding: 10px 15px;
+            font-size: 14px;
+            background-color: rgba(45, 55, 72, 0.5);
+        }
+        
+        .submenu .menu-item a:hover {
+            background-color: rgba(66, 153, 225, 0.15);
+            color: #90cdf4;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+        }
+        
+        .header .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header .quick-methods {
+            display: flex;
+            gap: 10px;
+            margin-right: 30px;
+        }
+        
+        .header .quick-methods a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            transition: background 0.3s;
+            font-weight: 500;
+        }
+        
+        .header .quick-methods a:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .header .user-info span {
+            margin-right: 20px;
+        }
+        
+        .header .user-info a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .header .user-info a:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .content-box {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .content-box h2 {
+            margin-bottom: 20px;
+            color: #0d47a1;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(13, 71, 161, 0.3);
+        }
+        
+        .btn-edit {
+            background: linear-gradient(135deg, #2196f3 0%, #64b5f6 100%);
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn-delete {
+            background: linear-gradient(135deg, #f44336 0%, #ef5350 100%);
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .btn-details {
+            background: linear-gradient(135deg, #4caf50 0%, #81c784 100%);
+            color: white;
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .message {
+            padding: 12px 16px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .message.success {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #c8e6c8;
+        }
+        
+        .message.error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+        }
+        
+        .status-inactive {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+        
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .tag {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .header .quick-methods {
+                margin-right: 0;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>智能瞭望数据分析处理系统</h1>
+        <div class="user-info">
+            <span>欢迎, {{ session['username'] }}</span>
+            <a href="/logout">登出</a>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <!-- 左侧菜单 -->
+        <div class="sidebar">
+            <h3>功能菜单</h3>
+            <ul class="menu-list">
+                {% for menu in left_menus %}
+                    <li class="menu-item">
+                        <a href="{{ menu.url }}">{{ menu.name }}</a>
+                        {% if menu.children %}
+                            <ul class="submenu">
+                                {% for submenu in menu.children %}
+                                    <li class="menu-item">
+                                        <a href="{{ submenu.url }}">{{ submenu.name }}</a>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <!-- 主内容区域 -->
+        <div class="container">
+            <div class="content-box">
+                <h2>数据源管理</h2>
+            
+            {% if message %}
+                <div class="message {% if success == 'true' %}success{% else %}error{% endif %}">
+                    {{ message }}
+                </div>
+            {% endif %}
+            
+            <div class="action-bar">
+                <div>
+                    <a href="/add_data_source" class="btn btn-primary">添加数据源</a>
+                </div>
+                <div>
+                    <a href="/industry_tags" class="btn" style="background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%); color: white;">管理行业标签</a>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>名称</th>
+                            <th>类型</th>
+                            <th>基础URL</th>
+                            <th>行业标签</th>
+                            <th>状态</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for source in data_sources %}
+                            <tr>
+                                <td>{{ source.id }}</td>
+                                <td>{{ source.name }}</td>
+                                <td>{{ source.type }}</td>
+                                <td><a href="{{ source.base_url }}" target="_blank">{{ source.base_url }}</a></td>
+                                <td>
+                                    <div class="tags">
+                                        {% for tag in source.industry_tags %}
+                                            <span class="tag">{{ tag.name }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="status-badge {% if source.is_active %}status-active{% else %}status-inactive{% endif %}">
+                                        {% if source.is_active %}活跃{% else %}停用{% endif %}
+                                    </span>
+                                </td>
+                                <td>{{ source.created_at.strftime('%Y-%m-%d') }}</td>
+                                <td>
+                                    <a href="/data_source_details/{{ source.id }}" class="btn btn-details">详情</a>
+                                    <a href="/edit_data_source/{{ source.id }}" class="btn btn-edit">编辑</a>
+                                    <a href="/delete_data_source/{{ source.id }}" class="btn btn-delete" onclick="return confirm('确定要删除这个数据源吗？')">删除</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<div class="menu-item {{ 'has-children' if menu.children else '' }}">
+    <div class="menu-info">
+        <div>
+            <span class="menu-name">{{ menu.name }}</span>
+            <span class="menu-url">{{ menu.url if menu.url else '#' }}</span>
+        </div>
+        <div class="menu-actions">
+            <a href="/edit_menu/{{ menu.id }}" class="edit-btn">编辑</a>
+            <a href="/delete_menu/{{ menu.id }}" class="delete-btn" onclick="return confirm('确定要删除这个菜单吗？')">删除</a>
+        </div>
+    </div>
+    <div class="menu-meta">
+        <span>图标: {{ menu.icon if menu.icon else '无' }}</span>
+        <span>顺序: {{ menu.order }}</span>
+        <span class="status {{ 'active' if menu.is_active else 'inactive' }}">
+            {{ '启用' if menu.is_active else '禁用' }}
+        </span>
+    </div>
+    
+    <!-- 子菜单 -->
+    {% if menu.children %}
+        <div class="submenus">
+            {% for child in menu.children %}
+                {% include 'menu_item.html' %}
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>

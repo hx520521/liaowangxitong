@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能瞭望数据分析处理系统 - 登录</title>
+    <title>智能瞭望数据分析处理系统 - 注册</title>
     <style>
         * {
             margin: 0;
@@ -20,7 +20,7 @@
             align-items: center;
         }
         
-        .login-container {
+        .register-container {
             background: rgba(255, 255, 255, 0.95);
             border-radius: 10px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
@@ -73,6 +73,7 @@
             font-size: 16px;
             cursor: pointer;
             transition: background 0.3s;
+            margin-bottom: 15px;
         }
         
         button[type="submit"]:hover {
@@ -88,10 +89,18 @@
             border-radius: 5px;
         }
         
+        .success-message {
+            color: green;
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 5px;
+        }
+        
         .login-link {
             text-align: center;
             color: #666;
-            margin-top: 15px;
         }
         
         .login-link a {
@@ -105,12 +114,15 @@
     </style>
 </head>
 <body>
-    <div class="login-container">
+    <div class="register-container">
         <h1>智能瞭望数据分析处理系统</h1>
         {% if error %}
             <div class="error-message">{{ error }}</div>
         {% endif %}
-        <form action="/login" method="POST">
+        {% if success %}
+            <div class="success-message">{{ success }}</div>
+        {% endif %}
+        <form action="/register" method="POST">
             <div class="form-group">
                 <label for="username">用户名</label>
                 <input type="text" id="username" name="username" required>
@@ -119,11 +131,15 @@
                 <label for="password">密码</label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <button type="submit">登录</button>
+            <div class="form-group">
+                <label for="confirm_password">确认密码</label>
+                <input type="password" id="confirm_password" name="confirm_password" required>
+            </div>
+            <button type="submit">注册</button>
+            <div class="login-link">
+                已有账号？<a href="/login">立即登录</a>
+            </div>
         </form>
-        <div class="login-link">
-            没有账号？<a href="/register">立即注册</a>
-        </div>
     </div>
 </body>
 </html>

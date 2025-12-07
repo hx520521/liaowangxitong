@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>爬虫测试结果 - 数据采集系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+        }
+
+        nav ul li {
+            margin-left: 20px;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #555;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: #667eea;
+        }
+
+        .content-box {
+            background-color: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        h2 {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 22px;
+        }
+
+        h3 {
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .test-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #667eea;
+        }
+
+        .result-item {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .result-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .result-url {
+            color: #0066cc;
+            text-decoration: none;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .result-url:hover {
+            text-decoration: underline;
+        }
+
+        .result-description {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .back-button {
+            background-color: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            margin-right: 10px;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .back-button:hover {
+            background-color: #5a6fd8;
+        }
+
+        .retry-button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .retry-button:hover {
+            background-color: #218838;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            nav ul {
+                margin-top: 15px;
+            }
+
+            nav ul li {
+                margin-left: 0;
+                margin-right: 15px;
+            }
+
+            .content-box {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">数据采集系统</div>
+                <nav>
+                    <ul>
+                        <li><a href="/dashboard">首页</a></li>
+                        <li><a href="/data_sources">数据源管理</a></li>
+                        <li><a href="/industry_tags">行业标签</a></li>
+                        <li><a href="/spiders">爬虫管理</a></li>
+                        <li><a href="/logout">退出登录</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+
+        <div class="content-box">
+            <h1>爬虫测试结果</h1>
+
+            <div class="test-info">
+                <h2>测试信息</h2>
+                <p><strong>爬虫名称:</strong> {{ spider.name }}</p>
+                <p><strong>测试查询:</strong> {{ test_query }}</p>
+                <p><strong>测试时间:</strong> {{ current_time }}</p>
+            </div>
+
+            <h2>搜索结果</h2>
+            {% if results and results|length > 0 %}
+                <p>共找到 {{ results|length }} 条结果</p>
+                
+                {% for result in results %}
+                    <div class="result-item">
+                        <div class="result-title">{{ result.title }}</div>
+                        <a href="{{ result.url }}" class="result-url" target="_blank">{{ result.url }}</a>
+                        <div class="result-description">{{ result.description }}</div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-results">
+                    <p>未找到任何结果</p>
+                </div>
+            {% endif %}
+
+            <div style="margin-top: 20px;">
+                <a href="/test_spider/{{ spider.id }}" class="retry-button">重新测试</a>
+                <a href="/spiders" class="back-button">返回爬虫列表</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

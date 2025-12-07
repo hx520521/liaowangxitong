@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>规则库管理 - 智能瞭望数据分析处理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0a0e27;
+            color: #333;
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(30, 60, 114, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(21, 101, 192, 0.2) 0%, transparent 50%),
+                linear-gradient(135deg, #0a0e27 0%, #1a1f3a 25%, #2a3153 50%, #1a1f3a 75%, #0a0e27 100%);
+            background-size: 100% 100%, 100% 100%, 4px 4px;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(255, 255, 255, 0.02),
+                rgba(255, 255, 255, 0.02) 1px,
+                transparent 1px,
+                transparent 20px
+            ),
+            repeating-linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.02),
+                rgba(255, 255, 255, 0.02) 1px,
+                transparent 1px,
+                transparent 20px
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+        }
+        
+        /* 左侧菜单样式 */
+        .sidebar {
+            width: 250px;
+            background: rgba(13, 71, 161, 0.9);
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .sidebar h3 {
+            margin-bottom: 20px;
+            font-size: 18px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .menu-list {
+            list-style: none;
+        }
+        
+        .menu-item {
+            margin-bottom: 5px;
+        }
+        
+        .menu-item a {
+            color: white;
+            text-decoration: none;
+            padding: 10px 15px;
+            display: block;
+            border-radius: 5px;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 5px;
+        }
+        
+        .menu-item a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .submenu-list {
+            list-style: none;
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+        
+        .submenu-item {
+            margin-bottom: 3px;
+        }
+        
+        .submenu-item a {
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 14px;
+            padding: 8px 15px;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+        }
+        
+        .header .user-info {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header .quick-methods {
+            display: flex;
+            gap: 10px;
+            margin-right: 30px;
+        }
+        
+        .header .quick-methods a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            transition: background 0.3s;
+            font-weight: 500;
+        }
+        
+        .header .quick-methods a:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .header .user-info span {
+            margin-right: 20px;
+        }
+        
+        .header .user-info a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .header .user-info a:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .page-header {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .page-header h2 {
+            color: #0d47a1;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #0d47a1 0%, #1565c0 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1565c0 0%, #1976d2 100%);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: translateY(-2px);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #e53935 0%, #d32f2f 100%);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+            transform: translateY(-2px);
+        }
+        
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+        
+        .rules-table {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+            color: #0d47a1;
+        }
+        
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: #000;
+        }
+        
+        .alert {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>智能瞭望数据分析处理系统</h1>
+        <div class="user-info">
+            <span>欢迎, {{ session['username'] }}</span>
+            <a href="/logout">登出</a>
+        </div>
+    </div>
+    
+    <div class="main-content">
+        <!-- 左侧菜单 -->
+        <div class="sidebar">
+            <h3>功能菜单</h3>
+            <ul class="menu-list">
+                {% for menu in left_menus %}
+                    {% if menu.is_active %}
+                        <li class="menu-item">
+                            <a href="{{ menu.url if menu.url else '#' }}">{{ menu.name }}</a>
+                            {% if menu.children %}
+                                <ul class="submenu-list">
+                                    {% for submenu in menu.children %}
+                                        {% if submenu.is_active %}
+                                            <li class="submenu-item">
+                                                <a href="{{ submenu.url if submenu.url else '#' }}">{{ submenu.name }}</a>
+                                            </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <!-- 主内容区域 -->
+        <div class="container">
+        <div class="page-header">
+            <h2>规则库管理</h2>
+            <button class="btn btn-primary" onclick="openModal('add')">新增规则</button>
+        </div>
+        
+        {% if message %}
+        <div class="alert {% if success %}alert-success{% else %}alert-danger{% endif %}">
+            {{ message }}
+        </div>
+        {% endif %}
+        
+        <div class="rules-table">
+            <div style="margin-bottom: 10px;">
+                <button class="btn btn-danger" onclick="batchDelete()" disabled id="batchDeleteBtn">批量删除</button>
+                <label style="margin-left: 10px;">
+                    <input type="checkbox" id="selectAll" onchange="toggleSelectAll()"> 全选
+                </label>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="checkAll" onchange="toggleCheckAll()"></th>
+                        <th>规则ID</th>
+                        <th>规则名称</th>
+                        <th>域名</th>
+                        <th>标题XPath</th>
+                        <th>内容XPath</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rule in rules %}
+                    <tr>
+                        <td><input type="checkbox" class="rule-checkbox" value="{{ rule.id }}" onchange="updateBatchDeleteButton()"></td>
+                        <td>{{ rule.id }}</td>
+                        <td>{{ rule.rule_name }}</td>
+                        <td>{{ rule.domain }}</td>
+                        <td>{{ rule.title_xpath }}</td>
+                        <td>{{ rule.content_xpath }}</td>
+                        <td>{{ rule.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            <button class="btn btn-secondary btn-small" onclick="openModal('edit', {{ rule.id }})">编辑</button>
+                            <button class="btn btn-danger btn-small" onclick="deleteRule({{ rule.id }})">删除</button>
+                            <button class="btn btn-secondary btn-small" onclick="copyRule({{ rule.id }})">复制</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- 规则编辑弹窗 -->
+    <div id="ruleModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h3 id="modalTitle">新增规则</h3>
+            <form id="ruleForm" action="/save_rule" method="POST">
+                <input type="hidden" id="ruleId" name="id">
+                <input type="hidden" id="actionType" name="action">
+                
+                <div class="form-group">
+                    <label for="ruleName">规则名称</label>
+                    <input type="text" id="ruleName" name="rule_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="domain">域名</label>
+                    <input type="text" id="domain" name="domain" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="titleXpath">标题XPath</label>
+                    <input type="text" id="titleXpath" name="title_xpath">
+                </div>
+                
+                <div class="form-group">
+                    <label for="contentXpath">内容XPath</label>
+                    <input type="text" id="contentXpath" name="content_xpath">
+                </div>
+                
+                <div class="form-group">
+                    <label for="headers">请求头 (JSON格式)</label>
+                    <textarea id="headers" name="headers"></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        // 弹窗相关功能
+        var modal = document.getElementById('ruleModal');
+        var span = document.getElementsByClassName("close")[0];
+        
+        // 初始化规则数据数组
+        var rulesData = [];
+        
+        // 页面加载时收集所有规则数据
+        document.addEventListener('DOMContentLoaded', function() {
+            var rows = document.querySelectorAll('table tbody tr');
+            rows.forEach(function(row) {
+                var cells = row.querySelectorAll('td');
+                if (cells.length >= 6) {
+                    var ruleId = row.querySelector('button:nth-child(1)').onclick.toString().match(/\d+/)[0];
+                    var rule = {
+                        id: ruleId,
+                        rule_name: cells[0].innerText,
+                        domain: cells[1].innerText,
+                        title_xpath: cells[2].innerText,
+                        content_xpath: cells[3].innerText
+                    };
+                    rulesData.push(rule);
+                }
+            });
+        });
+        
+        function openModal(action, id = null) {
+            document.getElementById('modalTitle').innerText = action === 'add' ? '新增规则' : '编辑规则';
+            document.getElementById('actionType').value = action;
+            
+            // 重置表单
+            document.getElementById('ruleForm').reset();
+            document.getElementById('ruleId').value = '';
+            document.getElementById('headers').value = '';
+            
+            if (action === 'edit' && id) {
+                // 查找规则数据
+                var rule = rulesData.find(function(r) {
+                    return r.id == id;
+                });
+                
+                if (rule) {
+                    // 填充表单数据
+                    document.getElementById('ruleId').value = rule.id;
+                    document.getElementById('ruleName').value = rule.rule_name;
+                    document.getElementById('domain').value = rule.domain;
+                    document.getElementById('titleXpath').value = rule.title_xpath;
+                    document.getElementById('contentXpath').value = rule.content_xpath;
+                    
+                    // 这里可以通过API获取完整的规则数据，包括headers
+                    // 目前只填充了基本信息
+                }
+            }
+            
+            modal.style.display = "block";
+        }
+        
+        function closeModal() {
+            modal.style.display = "none";
+        }
+        
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+        
+        // 删除规则
+        function deleteRule(id) {
+            if (confirm('确定要删除这个规则吗？')) {
+                window.location.href = `/delete_rule/${id}`;
+            }
+        }
+        
+        // 全选/取消全选
+        function toggleCheckAll() {
+            var checkboxes = document.querySelectorAll('.rule-checkbox');
+            var checkAll = document.getElementById('checkAll');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = checkAll.checked;
+            });
+            updateBatchDeleteButton();
+        }
+        
+        // 批量删除
+        function batchDelete() {
+            var selected = document.querySelectorAll('.rule-checkbox:checked');
+            if (selected.length === 0) {
+                alert('请选择要删除的规则');
+                return;
+            }
+            
+            if (confirm(`确定要删除选中的 ${selected.length} 条规则吗？`)) {
+                var ids = Array.from(selected).map(cb => cb.value);
+                // 创建表单并提交
+                var form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/batch_delete_rules';
+                
+                ids.forEach(id => {
+                    var input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'rule_ids';
+                    input.value = id;
+                    form.appendChild(input);
+                });
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+        
+        // 更新批量删除按钮状态
+        function updateBatchDeleteButton() {
+            var selected = document.querySelectorAll('.rule-checkbox:checked');
+            document.getElementById('batchDeleteBtn').disabled = selected.length === 0;
+        }
+        
+        // 选择所有规则
+        function toggleSelectAll() {
+            var selectAll = document.getElementById('selectAll');
+            var checkboxes = document.querySelectorAll('.rule-checkbox');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = selectAll.checked;
+            });
+            updateBatchDeleteButton();
+        }
+        
+        // 复制规则
+        function copyRule(id) {
+            window.location.href = `/copy_rule/${id}`;
+        }
+        
+        // 表单提交前的处理
+        document.getElementById('ruleForm').addEventListener('submit', function(e) {
+            // 可以在这里添加表单验证
+        });
+    </script>
+</body>
+</html>

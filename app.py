@@ -15,5 +15,10 @@ db = SQLAlchemy(app)
 # 导入路由
 from routes import *
 
+# 创建数据库表
+with app.app_context():
+    from models import *
+    db.create_all()
+
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试聊天功能</title>
+</head>
+<body>
+    <h1>测试聊天功能</h1>
+    
+    <!-- 登录表单 -->
+    <div id="loginSection">
+        <input type="text" id="username" placeholder="用户名">
+        <input type="password" id="password" placeholder="密码">
+        <button onclick="login()">登录</button>
+    </div>
+    
+    <!-- 聊天区域 -->
+    <div id="chatSection" style="display: none;">
+        <div id="chatMessages"></div>
+        <input type="text" id="messageContent" placeholder="输入消息">
+        <button onclick="sendMessage()">发送</button>
+    </div>
+    
+    <script>
+        // 全局变量
+        let roomId = 5; // 测试聊天室ID
+        
+        // 登录函数
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/login', true);
+            xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        // 登录成功，显示聊天区域
+                        document.getElementById('loginSection').style.display = 'none';
+                        document.getElementById('chatSection').style.display = 'block';
+                        alert('登录成功');
+                    } else {
+                        alert('登录失败');
+                    }
+                }
+            };
+            xhr.send(`username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`);
+        }
+        
+        // 发送消息函数
+        function sendMessage() {
+            const content = document.getElementById('messageContent').value;
+            if (!content) return;
+            
+            const url = `/send_message/${roomId}`;
+            console.log('发送请求到:', url);
+            console.log('消息内容:', content);
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `content=${encodeURIComponent(content)}`
+            })
+            .then(response => {
+                console.log('响应状态:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('收到响应:', data);
+                if (data.success) {
+                    // 添加消息到聊天窗口
+                    const messagesDiv = document.getElementById('chatMessages');
+                    const newMessage = document.createElement('div');
+                    newMessage.innerHTML = `<strong>${data.message.username}</strong> ${data.message.created_at}: ${data.message.content}`;
+                    messagesDiv.appendChild(newMessage);
+                    
+                    // 清空输入框
+                    document.getElementById('messageContent').value = '';
+                } else {
+                    alert('发送失败: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('发送消息失败:', error);
+                alert('发送失败');
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能瞭望数据分析处理系统 - 用户中心</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* 头部样式 */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info span {
+            font-size: 16px;
+        }
+
+        .user-info a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.2);
+            transition: background 0.3s;
+        }
+
+        .user-info a:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* 主内容区域样式 */
+        .main-content {
+            display: flex;
+            flex: 1;
+        }
+
+        /* 左侧菜单样式 */
+        .sidebar {
+            width: 250px;
+            background: rgba(13, 71, 161, 0.9);
+            color: white;
+            padding: 20px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-item {
+            margin-bottom: 10px;
+        }
+
+        .menu-item a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 10px 15px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .menu-item a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .menu-item.active a {
+            background: rgba(255, 255, 255, 0.3);
+            font-weight: 600;
+        }
+
+        .submenu {
+            margin-left: 20px;
+            margin-top: 5px;
+        }
+
+        .submenu-item {
+            margin-bottom: 5px;
+        }
+
+        .submenu-item a {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 14px;
+            padding: 8px 12px;
+        }
+
+        /* 主内容容器 */
+        .container {
+            flex: 1;
+            padding: 30px;
+            margin-left: 0;
+        }
+
+        /* 页面标题和操作按钮 */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .page-header h2 {
+            color: #333;
+            font-size: 28px;
+        }
+
+        .add-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 消息提示样式 */
+        .message {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        /* 表格样式 */
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .user-table th,
+        .user-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .user-table th {
+            background: #f5f7fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .user-table tr:hover {
+            background: #f9fafb;
+        }
+
+        /* 操作按钮样式 */
+        .action-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 5px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        .edit-btn {
+            background: #42a5f5;
+            color: white;
+        }
+
+        .edit-btn:hover {
+            background: #2196f3;
+        }
+
+        .delete-btn {
+            background: #ef5350;
+            color: white;
+        }
+
+        .delete-btn:hover {
+            background: #e53935;
+        }
+
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #333;
+            font-size: 20px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .close-btn:hover {
+            color: #333;
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        /* 动画效果 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>智能瞭望数据分析处理系统</h1>
+        <div class="user-info">
+            <span>欢迎, {{ session['username'] }}</span>
+            <a href="/logout">登出</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- 左侧菜单 -->
+        <aside class="sidebar">
+            {% for menu in left_menus %}
+                <div class="menu-item {{ 'active' if request.path == menu.url else '' }}">
+                    <a href="{{ menu.url }}">{{ menu.name }}</a>
+                    {% if menu.children %}
+                        <div class="submenu">
+                            {% for submenu in menu.children %}
+                                <div class="submenu-item {{ 'active' if request.path == submenu.url else '' }}">
+                                    <a href="{{ submenu.url }}">{{ submenu.name }}</a>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </aside>
+
+        <!-- 主内容区域 -->
+        <div class="container">
+            <!-- 消息提示 -->
+            {% if message %}
+                <div class="message {{ 'success' if success == 'true' else 'error' }}">
+                    {{ message }}
+                </div>
+            {% endif %}
+
+            <!-- 页面标题和操作按钮 -->
+            <div class="page-header">
+                <h2>用户中心</h2>
+                <button class="add-btn" onclick="openAddModal()">新增用户</button>
+            </div>
+
+            <!-- 用户列表 -->
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>用户名</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td>
+                                <button class="action-btn edit-btn" onclick="openEditModal({{ user.id }}, '{{ user.username }}')">编辑</button>
+                                <button class="action-btn delete-btn" onclick="confirmDelete({{ user.id }})">{{ '删除' if user.id != session['user_id'] else '不能删除自己' }}</button>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 新增用户模态框 -->
+    <div id="addModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>新增用户</h3>
+                <button class="close-btn" onclick="closeAddModal()">&times;</button>
+            </div>
+            <form action="/add_user" method="POST">
+                <div class="form-group">
+                    <label for="new-username">用户名</label>
+                    <input type="text" id="new-username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password">密码</label>
+                    <input type="password" id="new-password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-confirm-password">确认密码</label>
+                    <input type="password" id="new-confirm-password" name="confirm_password" required>
+                </div>
+                <button type="submit" class="submit-btn">保存</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 编辑用户模态框 -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>编辑用户</h3>
+                <button class="close-btn" onclick="closeEditModal()">&times;</button>
+            </div>
+            <form action="/edit_user" method="POST">
+                <input type="hidden" id="edit-user-id" name="user_id">
+                <div class="form-group">
+                    <label for="edit-username">用户名</label>
+                    <input type="text" id="edit-username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-password">新密码 (可选)</label>
+                    <input type="password" id="edit-password" name="password">
+                </div>
+                <div class="form-group">
+                    <label for="edit-confirm-password">确认新密码 (可选)</label>
+                    <input type="password" id="edit-confirm-password" name="confirm_password">
+                </div>
+                <button type="submit" class="submit-btn">保存</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 打开新增用户模态框
+        function openAddModal() {
+            document.getElementById('addModal').classList.add('show');
+        }
+
+        // 关闭新增用户模态框
+        function closeAddModal() {
+            document.getElementById('addModal').classList.remove('show');
+        }
+
+        // 打开编辑用户模态框
+        function openEditModal(userId, username) {
+            document.getElementById('edit-user-id').value = userId;
+            document.getElementById('edit-username').value = username;
+            document.getElementById('edit-password').value = '';
+            document.getElementById('edit-confirm-password').value = '';
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        // 关闭编辑用户模态框
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        // 确认删除用户
+        function confirmDelete(userId) {
+            if (userId == {{ session['user_id'] }}) {
+                alert('不能删除当前登录用户');
+                return;
+            }
+            
+            if (confirm('确定要删除这个用户吗？')) {
+                window.location.href = '/delete_user/' + userId;
+            }
+        }
+
+        // 点击模态框外部关闭模态框
+        window.onclick = function(event) {
+            const addModal = document.getElementById('addModal');
+            const editModal = document.getElementById('editModal');
+            
+            if (event.target == addModal) {
+                closeAddModal();
+            } else if (event.target == editModal) {
+                closeEditModal();
+            }
+        }
+    </script>
+</body>
+</html>
